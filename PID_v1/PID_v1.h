@@ -1,80 +1,99 @@
-#ifndef PID_v1_h
-#define PID_v1_h
-#define LIBRARY_VERSION	1.0.0
+#ifndef PID_H
+#define PID_H
 
-class PID
+typedef float FloatType;
+//typedef double floatType;
+#include <stdbool.h>
+
+//Constants used in some of the functions below
+typedef enum
 {
+  PID_Mode_Automatic = 1,
+  PID_Mode_Manual    = 0
+} PidModeType;
 
+typedef enum
+{
+  PID_Direction_Direct  = 0,
+  PID_Direction_Reverse = 1
+} PidDirectionType;
 
-  public:
+typedef struct {
+  FloatType dispKp; // * we'll hold on to the tuning parameters in user-entered
+  FloatType dispKi; //   format for display purposes
+  FloatType dispKd; //
 
-  //Constants used in some of the functions below
-  #define AUTOMATIC	1
-  #define MANUAL	0
-  #define DIRECT  0
-  #define REVERSE  1
+  FloatType kp; // * (P)roportional Tuning Parameter
+  FloatType ki; // * (I)ntegral Tuning Parameter
+  FloatType kd; // * (D)erivative Tuning Parameter
 
-  //commonly used functions **************************************************************************
-    PID(double*, double*, double*,        // * constructor.  links the PID to the Input, Output, and 
-        double, double, double, int);     //   Setpoint.  Initial tuning parameters are also set here
-	
-    void SetMode(int Mode);               // * sets PID to either Manual (0) or Auto (non-0)
+  PidDirectionType controllerDirection;
 
-    bool Compute();                       // * performs the PID calculation.  it should be
-                                          //   called every time loop() cycles. ON/OFF and
-                                          //   calculation frequency can be set using SetMode
-                                          //   SetSampleTime respectively
+  FloatType myInput; // * Pointers to the Input, Output, and Setpoint variables
+  FloatType myOutput; //   This creates a hard link between the variables and the
+  FloatType mySetpoint; //   PID, freeing the user from having to constantly tell us
+                     //   what these values are.  with pointers we'll just know.
 
-    void SetOutputLimits(double, double); //clamps the output to a specific range. 0-255 by default, but
-										  //it's likely the user will want to change this depending on
-										  //the application
-	
+//  unsigned long lastTime;
+  FloatType ITerm, lastInput;
 
+  unsigned long SampleTime;
+  FloatType outMin, outMax;
+  bool inAuto;
+} PidType;
 
-  //available but not commonly used functions ********************************************************
-    void SetTunings(double, double,       // * While most users will set the tunings once in the 
-                    double);         	  //   constructor, this function gives the user the option
-                                          //   of changing tunings during runtime for Adaptive control
-	void SetControllerDirection(int);	  // * Sets the Direction, or "Action" of the controller. DIRECT
-										  //   means the output will increase when error is positive. REVERSE
-										  //   means the opposite.  it's very unlikely that this will be needed
-										  //   once it is set in the constructor.
-    void SetSampleTime(int);              // * sets the frequency, in Milliseconds, with which 
-                                          //   the PID calculation is performed.  default is 100
-										  
-										  
-										  
-  //Display functions ****************************************************************
-	double GetKp();						  // These functions query the pid for interal values.
-	double GetKi();						  //  they were created mainly for the pid front-end,
-	double GetKd();						  // where it's important to know what is actually 
-	int GetMode();						  //  inside the PID.
-	int GetDirection();					  //
+//commonly used functions **************************************************************************
 
-  private:
-	void Initialize();
-	
-	double dispKp;				// * we'll hold on to the tuning parameters in user-entered 
-	double dispKi;				//   format for display purposes
-	double dispKd;				//
-    
-	double kp;                  // * (P)roportional Tuning Parameter
-    double ki;                  // * (I)ntegral Tuning Parameter
-    double kd;                  // * (D)erivative Tuning Parameter
+//  constructor.  links the PID to the Input, Output, and
+//  Setpoint.  Initial tuning parameters are also set here
+PID_init(PidType* pid,
+    FloatType kp,
+    FloatType ki,
+    FloatType kd,
+    PidDirectionType controllerDirection);
 
-	int controllerDirection;
+// sets PID to either Manual (0) or Auto (non-0)
+void PID_SetMode(PidType* pid, PidModeType mode);
 
-    double *myInput;              // * Pointers to the Input, Output, and Setpoint variables
-    double *myOutput;             //   This creates a hard link between the variables and the 
-    double *mySetpoint;           //   PID, freeing the user from having to constantly tell us
-                                  //   what these values are.  with pointers we'll just know.
-			  
-	unsigned long lastTime;
-	double ITerm, lastInput;
+// performs the PID calculation.  it should be
+// called every time loop() cycles. ON/OFF and
+// calculation frequency can be set using SetMode
+// SetSampleTime respectively
+bool PID_Compute(PidType* pid);
 
-	unsigned long SampleTime;
-	double outMin, outMax;
-	bool inAuto;
-};
+// clamps the output to a specific range. 0-255 by default, but
+// it's likely the user will want to change this depending on
+// the application
+void PID_SetOutputLimits(PidType* pid, FloatType min, FloatType max);
+
+//available but not commonly used functions ********************************************************
+
+// While most users will set the tunings once in the
+// constructor, this function gives the user the option
+// of changing tunings during runtime for Adaptive control
+void PID_SetTunings(PidType* pid, FloatType kp, FloatType ki, FloatType kd);
+
+// Sets the Direction, or "Action" of the controller. DIRECT
+// means the output will increase when error is positive. REVERSE
+// means the opposite.  it's very unlikely that this will be needed
+// once it is set in the constructor.
+void PID_SetControllerDirection(PidType* pid, PidDirectionType Direction);
+
+// sets the frequency, in Milliseconds, with which
+// the PID calculation is performed.  default is 100
+void PID_SetSampleTime(PidType* pid, int newSampleTime);
+
+//Display functions ****************************************************************
+// These functions query the pid for interal values.
+//  they were created mainly for the pid front-end,
+// where it's important to know what is actually
+//  inside the PID.
+FloatType PID_GetKp(PidType* pid);
+FloatType PID_GetKi(PidType* pid);
+FloatType PID_GetKd(PidType* pid);
+PidModeType PID_GetMode(PidType* pid);
+PidDirectionType PID_GetDirection(PidType* pid);
+
+//void PID_Initialize(PidType* pid);
 #endif
 
