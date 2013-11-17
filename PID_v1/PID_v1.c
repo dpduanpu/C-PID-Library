@@ -13,7 +13,7 @@ void PID_Initialize(PidType* pid);
  *    The parameters specified here are those for for which we can't set up 
  *    reliable defaults, so we need to have the user set them.
  ***************************************************************************/
-PID_init(PidType* pid, FloatType Kp, FloatType Ki, FloatType Kd,
+void PID_init(PidType* pid, FloatType Kp, FloatType Ki, FloatType Kd,
     PidDirectionType ControllerDirection) {
   pid->myInput = 0;
   pid->myOutput = 0;

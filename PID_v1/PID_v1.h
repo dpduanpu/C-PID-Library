@@ -46,7 +46,7 @@ typedef struct {
 
 //  constructor.  links the PID to the Input, Output, and
 //  Setpoint.  Initial tuning parameters are also set here
-PID_init(PidType* pid,
+void PID_init(PidType* pid,
     FloatType kp,
     FloatType ki,
     FloatType kd,
